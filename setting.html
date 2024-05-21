@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    table {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    td, th {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+    }
+
+    tr:nth-child(even) {
+      background-color: #dddddd;
+    }
+    input[type=text] {
+      width: 40px;
+    }
+  </style>
+  <script src="jquery.min.js"></script>
+  <script src="setting.js"></script>
+</head>
+<body>
+  <h1>Settings</h1>
+  <table>
+    <tr>
+      <th>Caption</th>
+      <th>Language</th>
+      <th>Color</th>
+      <th>Size</th>
+      <th>On/Off</th>
+    </tr>
+    <tr>
+      <td>Source</td>
+      <td>
+      </td>
+      <td>
+        <select id="source-color">
+          <option value="black">black</option>
+          <option value="red">red</option>
+          <option value="blue">blue</option>
+          <option value="green">green</option>
+          <option value="yellow">yellow</option>
+          <option value="pink">pink</option>
+          <option value="white">white</option>
+        </select>
+      </td>
+      <td id="source-size" style="display: flex">
+        <input type="text">
+        <span style="padding-left: 5px;">px</span>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Translate</td>
+      <td>
+        <select id="translate-caption">
+          <option value="vi">vi</option>
+          <option value="en">en</option>
+          <option value="zh">zh</option>
+          <option value="id">id</option>
+        </select>
+      </td>
+      <td>
+        <select id="translate-color">
+          <option value="black">black</option>
+          <option value="red">red</option>
+          <option value="blue">blue</option>
+          <option value="green">green</option>
+          <option value="yellow">yellow</option>
+          <option value="pink">pink</option>
+          <option value="white">white</option>
+        </select>
+      </td>
+      <td id="translate-size" style="display: flex">
+        <input type="text">
+        <span style="padding-left: 5px;">px</span>
+      </td>
+      <td><input type="checkbox" id="translate-show" name="translate-show" checked></td>
+    </tr>
+  </table>
+</body>
+</html>
