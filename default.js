@@ -96,9 +96,9 @@
       if (captionsJson) {
         updatePopup(captionsJson);
       } else {
-        // captionsJson = await loadCaptionJson(getCurrentUrl)
+        captionsJson = await loadCaptionJson(getCurrentUrl)
         // console.log('captionsJson2', captionsJson);
-        // updatePopup(captionsJson);
+        updatePopup(captionsJson);
       }
     })
   }
