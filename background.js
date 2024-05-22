@@ -1,6 +1,24 @@
+let captionsJson;
+let captionsData;
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type == 'openPopup') {
     openPopup();
+  } else if (message.type == 'getCaptionsJson') {
+    sendResponse({ captionsJson: captionsJson });
+  } else if (message.type == 'getCaptionsData') {
+    sendResponse({ captionsData: captionsData });
+  } else if (message.type == 'updateCaptionsData') {
+    captionsData = message.data;
+  } else if (message.type == 'updateCaptionsJson') {
+    captionsJson = message.data;
+  } else if (message.type == 'getCurrentUrl') {
+    chrome.storage.sync.get('currentUrl', function(data) {
+      sendResponse({ currentUrl: data.currentUrl });
+    });
+    return true;
+  } else if (message.type == 'updateCurrentUrl') {
+    chrome.storage.sync.set({ 'currentUrl': message.data });
   }
 })
 
@@ -25,8 +43,8 @@ openPopup = function(){
       } else {
         chrome.windows.create({
           url: 'popup.html',
-          type: 'popup',
-          height: 140,
+          type: 'panel',
+          height: 180,
           width: 400
         }, (window) => {
           popupWindowId = window.id;

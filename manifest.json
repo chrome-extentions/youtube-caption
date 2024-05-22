@@ -12,6 +12,17 @@
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.youtube.com/watch?*"
+      ],
+      "js": [
+        "jquery.min.js",
+        "default.js"
+      ]
+    }
+  ],
   "action": {
     "default_popup": "setting.html"
   }

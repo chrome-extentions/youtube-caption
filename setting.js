@@ -28,6 +28,58 @@ $(document).ready(function() {
     }
   });
 
+  chrome.runtime.sendMessage({ type: 'getCaptionsData' }, async function(response) {
+    captionsData = response.captionsData
+
+    async function handleChangeSourceLang() {
+      const vssId = $('#source-lang').val();
+      caption = captionsData.find(obj => obj.vssId == vssId);
+      baseUrl = caption.baseUrl;
+      const captionsJson = await getCaptionJson(baseUrl);
+      chrome.runtime.sendMessage({ type: 'updateCaptionsJson', data: captionsJson });
+    }
+
+    if (captionsData) {
+      let html = '';
+      $.each(captionsData, function(i, caption) {
+        html += `<option value="${caption.vssId}">${caption.name}</option>`;
+      });
+      $('#source-lang').html(html);
+
+      $('#source-lang').change(function() {
+        handleChangeSourceLang();
+      });
+    }
+  });
+
+
+  async function getCaptionJson(baseUrl) {
+    // caption = captions_data.find(obj => obj.vssId == vssId);
+    return fetch(baseUrl)
+      .then(response => response.text())
+      .then(xmlString => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+        const textNodes = xmlDoc.getElementsByTagName('text');
+
+        const captionsJson = []; // Khởi tạo một mảng mới
+
+        for (let i = 0; i < textNodes.length; i++) {
+          const textNode = textNodes[i];
+          const text = textNode.textContent.trim();
+          const start = textNode.getAttribute('start');
+          const dur = textNode.getAttribute('dur');
+          captionsJson.push({ text: text, start: start, dur: dur });
+        }
+
+        return captionsJson;
+      })
+      .catch(error => {
+        console.error('Error fetching XML:', error);
+        throw error;
+      });
+  }
+
   // Update settings
   $('#source-size input').change(function() {
     var newSize = $(this).val();
@@ -69,48 +121,3 @@ function injectContentScripts() {
 document.addEventListener('DOMContentLoaded', function() {
   injectContentScripts();
 });
-
-
-
-// chrome.runtime.sendMessage({ type: 'openPopup' });
-// function isWindowIdExist(windowId, callback) {
-//   chrome.windows.getAll({populate: false}, function(windows) {
-//     for (var i = 0; i < windows.length; i++) {
-//       if (windows[i].id === windowId) {
-//         callback(true);
-//         return;
-//       }
-//     }
-//     callback(false);
-//   });
-// }
-
-// chrome.storage.sync.get('popupWindowId', function(data) {
-//   var popupWindowId = data.popupWindowId;
-//   console.log('popupWindowId', popupWindowId)
-//   isWindowIdExist(popupWindowId, function(exists) {
-//     if (exists) {
-//       chrome.windows.update(popupWindowId, { focused: true });
-//     } else {
-//       chrome.windows.create({
-//         url: 'popup.html',
-//         type: 'popup',
-//         height: 140,
-//         width: 400
-//       }, (window) => {
-//         popupWindowId = window.id;
-//         chrome.storage.sync.set({ 'popupWindowId': popupWindowId });
-//         chrome.windows.update(popupWindowId, { focused: true });
-//       });
-//     }
-//   });
-// });
-
-// chrome.windows.onRemoved.addListener((windowId) => {
-//   chrome.storage.sync.get('popupWindowId', function(data) {
-//     var popupWindowId = data.popupWindowId;
-//     if (windowId == popupWindowId) {
-//       chrome.storage.sync.set({ 'popupWindowId': null });
-//     }
-//   });
-// });
