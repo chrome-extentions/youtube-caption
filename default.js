@@ -74,6 +74,7 @@
       var closestIndex = binarySearch(captionsJson, currentTime);
 
       if (closestIndex != currentCaptionIndex) {
+        currentCaptionIndex = closestIndex;
         chrome.runtime.sendMessage({ type: 'updateTime', time: formatTime(time_now), duration: formatTime(durationTime)});
         newCaption = captionsJson[closestIndex].text;
 
