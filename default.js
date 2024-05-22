@@ -3,6 +3,7 @@
   const video = document.querySelector('video');
   let captionsJson = [];
   let captionsData = [];
+  let currentCaptionIndex = -1;
 
   if (!video) {
     console.error('Video element not found.');
@@ -67,15 +68,15 @@
     if (captionsJson == []) {
       return;
     } else {
-      let currentCaptionIndex = -1;
       durationTime = Math.floor(video.duration);
       currentTime = video.currentTime;
       var time_now = Math.floor(currentTime);
       var closestIndex = binarySearch(captionsJson, currentTime);
 
+      chrome.runtime.sendMessage({ type: 'updateTime', time: formatTime(time_now), duration: formatTime(durationTime)});
+
       if (closestIndex != currentCaptionIndex) {
         currentCaptionIndex = closestIndex;
-        chrome.runtime.sendMessage({ type: 'updateTime', time: formatTime(time_now), duration: formatTime(durationTime)});
         newCaption = captionsJson[closestIndex].text;
 
         // tlang
