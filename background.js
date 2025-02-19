@@ -1,66 +1,55 @@
-let captionsJson;
-let captionsData;
+// Create context menu items
+async function setupContextMenus() {
+  chrome.contextMenus.create({
+    id: "support",
+    title: "❤️ Support",
+    contexts: ["action"]
+  });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type == 'openPopup') {
-    openPopup();
-  } else if (message.type == 'getCaptionsJson') {
-    sendResponse({ captionsJson: captionsJson });
-  } else if (message.type == 'getCaptionsData') {
-    sendResponse({ captionsData: captionsData });
-  } else if (message.type == 'updateCaptionsData') {
-    captionsData = message.data;
-  } else if (message.type == 'updateCaptionsJson') {
-    captionsJson = message.data;
-  } else if (message.type == 'getCurrentUrl') {
-    chrome.storage.sync.get('currentUrl', function(data) {
-      sendResponse({ currentUrl: data.currentUrl });
-    });
-    return true;
-  } else if (message.type == 'updateCurrentUrl') {
-    chrome.storage.sync.set({ 'currentUrl': message.data });
+  chrome.contextMenus.create({
+    id: "issues",
+    title: "🤔 Issues and Suggestions",
+    contexts: ["action"]
+  });
+
+  chrome.contextMenus.create({
+    id: "github",
+    title: "🌐 GitHub",
+    parentId: "issues",
+    contexts: ["action"]
+  });
+
+  chrome.contextMenus.create({
+    id: "reportIssue",
+    title: "🐛 Report Issue",
+    parentId: "issues",
+    contexts: ["action"]
+  });
+}
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  switch (info.menuItemId) {
+    case "github":
+      chrome.tabs.create({
+        url: "https://github.com/datpmt/youtube-caption"
+      });
+      break;
+    case "reportIssue":
+      chrome.tabs.create({
+        url: "https://github.com/datpmt/youtube-caption/issues"
+      });
+      break;
   }
-})
+});
 
-function isWindowIdExist(windowId, callback) {
-  chrome.windows.getAll({populate: false}, function(windows) {
-    for (var i = 0; i < windows.length; i++) {
-      if (windows[i].id === windowId) {
-        callback(true);
-        return;
-      }
-    }
-    callback(false);
-  });
-}
+// Handle extension button click
+chrome.action.onClicked.addListener((tab) => {
+  if (tab.url.includes('youtube.com/watch')) {
+    chrome.tabs.sendMessage(tab.id, { action: 'openPip' });
+  }
+});
 
-openPopup = function(){
-  chrome.storage.sync.get('popupWindowId', function(data) {
-    var popupWindowId = data.popupWindowId;
-    isWindowIdExist(popupWindowId, function(exists) {
-      if (exists) {
-        chrome.windows.update(popupWindowId, { focused: true });
-      } else {
-        chrome.windows.create({
-          url: 'popup.html',
-          type: 'panel',
-          height: 180,
-          width: 400
-        }, (window) => {
-          popupWindowId = window.id;
-          chrome.storage.sync.set({ 'popupWindowId': popupWindowId });
-          chrome.windows.update(popupWindowId, { focused: true });
-        });
-      }
-    });
-  });
-}
-
-chrome.windows.onRemoved.addListener((windowId) => {
-  chrome.storage.sync.get('popupWindowId', function(data) {
-    var popupWindowId = data.popupWindowId;
-    if (windowId == popupWindowId) {
-      chrome.storage.sync.set({ 'popupWindowId': null });
-    }
-  });
+chrome.runtime.onInstalled.addListener(async (details) => {
+  setupContextMenus();
 });
