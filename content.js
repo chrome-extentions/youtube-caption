@@ -68,20 +68,24 @@ function decodeHTMLEntities(text) {
 }
 
 async function fetchTranslation(caption, translateLang) {
-  return fetch(`https://api.datpmt.com/api/v1/dictionary/translate?string=${encodeURIComponent(caption)}&to_lang=${translateLang}`)
+  const baseUrl = `https://translate.googleapis.com/translate_a/t?client=gtx&sl=auto&dt=t&q=${encodeURIComponent(caption)}&tl=${translateLang}`;
+  return fetch(baseUrl)
     .then(response => {
       if (!response.ok) {
         throw new Error('Translation request failed.');
       }
       return response.json();
     })
-    .then(data => data)
+    .then(data => {
+      const translate = data[0][0];
+      return translate;
+    })
     .catch(error => {
       throw error;
     });
 }
 
-updatePopup = function (captionsJson) {
+updatePopup = async function (captionsJson) {
   const timeElement = pipWindowState.window ? pipWindowState.window.document.getElementById('time') : null;
   if (captionsJson == [] || !timeElement) {
     return;
@@ -103,7 +107,7 @@ updatePopup = function (captionsJson) {
 
       // tlang
       const translateLang = pipWindowState.window.document.getElementById('translate-lang').value;
-      fetchTranslation(newCaption, translateLang)
+      await fetchTranslation(newCaption, translateLang)
         .then(translate_caption => {
           updateCaption(decodeHTMLEntities(newCaption), decodeHTMLEntities(translate_caption));
         })
@@ -114,9 +118,9 @@ updatePopup = function (captionsJson) {
   }
 }
 
-updateTimeListener = function () {
+updateTimeListener = async function () {
   if (captionsJson) {
-    updatePopup(captionsJson);
+    await updatePopup(captionsJson);
   }
 }
 
@@ -552,7 +556,7 @@ async function togglePictureInPicture() {
     console.log('Pip window created successfully');
     setupPipWindowStyles(pipWindow);
     await createContent(pipWindow);
-    video.addEventListener('timeupdate', updateTimeListener);
+    video.addEventListener('timeupdate', await updateTimeListener);
 
     // Handle window close
     pipWindow.addEventListener('pagehide', (event) => {
