@@ -77,7 +77,7 @@ async function fetchTranslation(caption, translateLang) {
       return response.json();
     })
     .then(data => {
-      const translate = data[0];
+      const translate = data[0][0];
       return translate;
     })
     .catch(error => {
