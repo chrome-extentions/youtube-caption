@@ -177,7 +177,7 @@ async function loadCaptionJson(youtubeUrl) {
   const captionList = await getCaptionList(youtubeUrl);
   captionsData = captionList.map(caption => {
     return {
-      baseUrl: caption['baseUrl'],
+      baseUrl: `${caption['baseUrl']}&pot=MlPckCJPEIBzK9ysTN5g51vWV2X89a07TQDTNy4jYKudnCaF_9_Ho_GRGf7u6iTxMs8YlIbyiFjkMGMFqH6Pt0I9luz__o8C3D6g3Ue1XnjLSoSg3A&c=WEB`,
       name: caption['name']['simpleText'],
       vssId: caption['vssId']
     };
@@ -522,6 +522,50 @@ async function createContent(pipWindow) {
       translateCaptionElement.style.display = 'none';
     }
     toggleSettings();
+  });
+
+  // Ensure pip window can receive keyboard events
+  pipWindow.document.body.setAttribute('tabindex', '0');
+  pipWindow.document.body.focus();
+
+  const pipKeydownHandler = (e) => {
+    console.log('Pip window keydown:', e.code, e.key, e.keyCode);
+    const isSpace = e.code === 'Space' || e.key === ' ' || e.keyCode === 32;
+    const isArrowLeft = e.code === 'ArrowLeft' || e.key === 'Left' || e.keyCode === 37;
+    const isArrowRight = e.code === 'ArrowRight' || e.key === 'Right' || e.keyCode === 39;
+
+    if (isSpace) {
+      e.preventDefault();
+      if (video.paused) {
+        video.play();
+        playPauseEmoji.innerText = '⏸️';
+      } else {
+        video.pause();
+        playPauseEmoji.innerText = '▶️';
+      }
+      return;
+    }
+
+    if (isArrowLeft) {
+      e.preventDefault();
+      // rewind 5s
+      video.currentTime = Math.max(0, video.currentTime - 5);
+      return;
+    }
+
+    if (isArrowRight) {
+      e.preventDefault();
+      // forward 5s
+      video.currentTime = Math.min(video.duration, video.currentTime + 5);
+      return;
+    }
+  };
+
+  pipWindow.document.addEventListener('keydown', pipKeydownHandler);
+
+  // Clean up when Pip window closes
+  pipWindow.addEventListener('pagehide', () => {
+    pipWindow.document.removeEventListener('keydown', pipKeydownHandler);
   });
 }
 
