@@ -36,6 +36,10 @@
     "contextMenus",
     "storage",
     "tabs",
-    "scripting"
+    "scripting",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*"
   ]
 }
