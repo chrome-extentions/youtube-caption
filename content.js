@@ -9,7 +9,6 @@ const video = document.querySelector('video');
 const subtitleButton = document.querySelector('.ytp-subtitles-button-icon');
 subtitleButton?.click();
 subtitleButton?.click();
-const currentHref = window.location.href;
 
 let currentCaptionIndex = -1;
 let captionsData = [];
@@ -199,7 +198,7 @@ async function loadCaptionJson(youtubeUrl) {
 
 // load caption json
 (async () => {
-  await loadCaptionJson(currentHref);
+  await loadCaptionJson(window.location.href);
 })();
 
 const pipStyles = `
@@ -642,4 +641,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
   }
   // return true; // Keep the message channel open for the async response
+});
+
+document.addEventListener('yt-page-data-updated', async () => {
+  // console.log(window.ytInitialPlayerResponse);
+  // console.log('Page updated');
+  const sourceCaptionElement = pipWindowState.window.document.getElementById('source-caption');
+  const translateCaptionElement = pipWindowState.window.document.getElementById('translate-caption');
+  sourceCaptionElement.innerText = '';
+  translateCaptionElement.innerText = '';
+  currentCaptionIndex = -1;
+  captionsData = [];
+  captionsJson = [];
+  subtitleButton?.click();
+  subtitleButton?.click();
+  await loadCaptionJson(window.location.href);
 });
