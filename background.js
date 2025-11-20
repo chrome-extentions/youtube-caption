@@ -53,3 +53,14 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.runtime.onInstalled.addListener(async (details) => {
   setupContextMenus();
 });
+
+chrome.webRequest.onSendHeaders.addListener(
+  function(details) {
+    if (details.url.includes("timedtext") && details.url.includes("pot=")) {
+      const poToken = new URL(details.url).searchParams.get("pot");
+      chrome.tabs.sendMessage(details.tabId, { type: "POT_FOUND", poToken });
+    }
+  },
+  {urls: ["*://*.youtube.com/*"]},
+  ["requestHeaders"]
+);

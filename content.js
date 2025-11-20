@@ -6,10 +6,15 @@ const pipWindowState = {
 };
 
 const video = document.querySelector('video');
+const subtitleButton = document.querySelector('.ytp-subtitles-button-icon');
+subtitleButton?.click();
+subtitleButton?.click();
+const currentHref = window.location.href;
 
 let currentCaptionIndex = -1;
 let captionsData = [];
 let captionsJson = [];
+let poToken = '';
 
 if (!video) {
   console.error('Video element not found.');
@@ -103,7 +108,11 @@ updatePopup = async function (captionsJson) {
 
     if (closestIndex != currentCaptionIndex) {
       currentCaptionIndex = closestIndex;
-      newCaption = captionsJson[closestIndex].text;
+      newCaption = captionsJson[closestIndex]?.text;
+
+      if (!newCaption) {
+        return;
+      }
 
       // tlang
       const translateLang = pipWindowState.window.document.getElementById('translate-lang').value;
@@ -177,7 +186,7 @@ async function loadCaptionJson(youtubeUrl) {
   const captionList = await getCaptionList(youtubeUrl);
   captionsData = captionList.map(caption => {
     return {
-      baseUrl: `${caption['baseUrl']}&pot=MlPckCJPEIBzK9ysTN5g51vWV2X89a07TQDTNy4jYKudnCaF_9_Ho_GRGf7u6iTxMs8YlIbyiFjkMGMFqH6Pt0I9luz__o8C3D6g3Ue1XnjLSoSg3A&c=WEB`,
+      baseUrl: `${caption['baseUrl']}&pot=${poToken}&c=WEB`,
       name: caption['name']['simpleText'],
       vssId: caption['vssId']
     };
@@ -187,8 +196,6 @@ async function loadCaptionJson(youtubeUrl) {
   captionsJson = await getCaptionJson(defaultCaption.baseUrl);
   console.log('Caption JSON loaded successfully.');
 }
-
-const currentHref = window.location.href;
 
 // load caption json
 (async () => {
@@ -529,7 +536,6 @@ async function createContent(pipWindow) {
   pipWindow.document.body.focus();
 
   const pipKeydownHandler = (e) => {
-    console.log('Pip window keydown:', e.code, e.key, e.keyCode);
     const isSpace = e.code === 'Space' || e.key === ' ' || e.keyCode === 32;
     const isArrowLeft = e.code === 'ArrowLeft' || e.key === 'Left' || e.keyCode === 37;
     const isArrowRight = e.code === 'ArrowRight' || e.key === 'Right' || e.keyCode === 39;
@@ -629,6 +635,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'openPip') {
     togglePictureInPicture();
     sendResponse({ received: true });
+  } else if (request.type === "POT_FOUND") {
+    const newToken = request.poToken;
+    if (newToken !== poToken) {
+      poToken = request.poToken;
+    }
   }
-  return true; // Keep the message channel open for the async response
+  // return true; // Keep the message channel open for the async response
 });
