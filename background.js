@@ -44,9 +44,20 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 // Handle extension button click
-chrome.action.onClicked.addListener((tab) => {
-  if (tab.url.includes('youtube.com/watch')) {
-    chrome.tabs.sendMessage(tab.id, { action: 'openPip' });
+chrome.action.onClicked.addListener(async (tab) => {
+  if (!tab.url?.includes('youtube.com/watch')) {
+    return;
+  }
+
+  try {
+    await chrome.tabs.sendMessage(tab.id, { action: 'openPip' });
+  } catch (error) {
+    // Content script is missing (extension reloaded, or the watch page was reached via SPA navigation)
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['content.js']
+    });
+    await chrome.tabs.sendMessage(tab.id, { action: 'openPip' });
   }
 });
 
@@ -58,7 +69,9 @@ chrome.webRequest.onSendHeaders.addListener(
   function(details) {
     if (details.url.includes("timedtext") && details.url.includes("pot=")) {
       const poToken = new URL(details.url).searchParams.get("pot");
-      chrome.tabs.sendMessage(details.tabId, { type: "POT_FOUND", poToken });
+      chrome.tabs.sendMessage(details.tabId, { type: "POT_FOUND", poToken }).catch(() => {
+        // No content script in this tab yet
+      });
     }
   },
   {urls: ["*://*.youtube.com/*"]},

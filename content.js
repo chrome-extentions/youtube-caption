@@ -197,9 +197,7 @@ async function loadCaptionJson(youtubeUrl) {
 }
 
 // load caption json
-(async () => {
-  await loadCaptionJson(window.location.href);
-})();
+let captionsLoading = loadCaptionJson(window.location.href);
 
 const pipStyles = `
   body {
@@ -585,6 +583,36 @@ async function getStoredUrl() {
   }
 }
 
+// Fallback button shown when Chrome refuses to open the Pip window without a fresh user click
+function showPipLauncher() {
+  if (document.getElementById('yt-caption-pip-launcher')) {
+    return;
+  }
+
+  const button = document.createElement('button');
+  button.id = 'yt-caption-pip-launcher';
+  button.textContent = '🎬 Open YouTube Caption';
+  Object.assign(button.style, {
+    position: 'fixed',
+    top: '72px',
+    right: '24px',
+    zIndex: '10000',
+    padding: '10px 16px',
+    fontSize: '14px',
+    border: 'none',
+    borderRadius: '8px',
+    background: '#cc0000',
+    color: '#fff',
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+  });
+  button.addEventListener('click', () => {
+    button.remove();
+    togglePictureInPicture();
+  });
+  document.body.appendChild(button);
+}
+
 async function togglePictureInPicture() {
   try {
     const pipWindow = await window.documentPictureInPicture?.requestWindow({
@@ -604,6 +632,8 @@ async function togglePictureInPicture() {
 
     console.log('Pip window created successfully');
     setupPipWindowStyles(pipWindow);
+    // Captions may still be loading (e.g. content script was just injected)
+    await captionsLoading;
     await createContent(pipWindow);
     video.addEventListener('timeupdate', await updateTimeListener);
 
@@ -612,15 +642,21 @@ async function togglePictureInPicture() {
       console.log('Pip window closed');
       if (window.documentPictureInPicture.window) {
         window.documentPictureInPicture.window.close();
-        // Reset Pip window state
-        pipWindowState.window = null;
-        pipWindowState.windowId = 0;
-        pipWindowState.tabId = 0;
-        pipWindowState.icon = '';
       }
+      // Reset Pip window state
+      pipWindowState.window = null;
+      pipWindowState.windowId = 0;
+      pipWindowState.tabId = 0;
+      pipWindowState.icon = '';
     });
   } catch (error) {
-    console.error('Failed to enter Picture-in-Picture mode:', error);
+    if (error.name === 'NotAllowedError') {
+      // Requires user activation, ask the user to click inside the page
+      console.warn('Pip window requires user activation, showing launcher button.');
+      showPipLauncher();
+    } else {
+      console.error(`Failed to enter Picture-in-Picture mode: ${error.name}: ${error.message}`);
+    }
     // Reset Pip window state on error
     pipWindowState.window = null;
     pipWindowState.windowId = 0;
@@ -646,14 +682,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 document.addEventListener('yt-page-data-updated', async () => {
   // console.log(window.ytInitialPlayerResponse);
   // console.log('Page updated');
-  const sourceCaptionElement = pipWindowState.window.document.getElementById('source-caption');
-  const translateCaptionElement = pipWindowState.window.document.getElementById('translate-caption');
-  sourceCaptionElement.innerText = '';
-  translateCaptionElement.innerText = '';
+  // Pip window may not be open (or already closed) when navigating
+  if (pipWindowState.window) {
+    const sourceCaptionElement = pipWindowState.window.document.getElementById('source-caption');
+    const translateCaptionElement = pipWindowState.window.document.getElementById('translate-caption');
+    if (sourceCaptionElement) sourceCaptionElement.innerText = '';
+    if (translateCaptionElement) translateCaptionElement.innerText = '';
+  }
   currentCaptionIndex = -1;
   captionsData = [];
   captionsJson = [];
   subtitleButton?.click();
   subtitleButton?.click();
-  await loadCaptionJson(window.location.href);
+  captionsLoading = loadCaptionJson(window.location.href);
+  await captionsLoading;
 });
